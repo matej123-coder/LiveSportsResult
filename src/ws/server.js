@@ -22,7 +22,7 @@ export function attatchWebSocketServer(server) {
     })
     wss.on("connection", (socket) => {
         socket.isAlive = true;
-        socket.on('ping', () => {
+        socket.on('pong', () => {
             socket.isAlive = true;
         })
 
@@ -36,7 +36,7 @@ export function attatchWebSocketServer(server) {
             ws.ping();
         })
     }, 3000);
-    wss.on('close', () => clearInterval(interval))
+    wss.on('close', () => {clearInterval(interval)})
 
     function broadcastMatchCreated(match) {
         broadcast(wss, { type: "match_created", data: match })
