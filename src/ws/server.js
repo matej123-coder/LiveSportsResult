@@ -16,12 +16,31 @@ function unsubscribe(matchId,socket){
     const subscribers = matchSubscriber.get(matchId);
 
     if(!subscribers) return;
-    
+
+    subscribers.delete(socket);
+
     if(subscribers.size === 0 ){
         matchSubscriber.delete(matchId)
     }
 }
+function broadcastToMatch(matchId,payload){
+    const subscribers = matchSubscriber.get(matchId);
+    if(!subscribers || subscribers.size === 0) return;
 
+    const message = JSON.stringify(payload);
+    
+    for (const client of subscribers){
+        if(client.readyState === WebSocket.OPEN){
+            client.send(message)
+        }
+    }
+    
+}
+function cleanUpSubscriptions(socket){
+    for(const matchId of socket.subscriptions){
+        unsubscribe(matchId,socket)
+    }
+}
 function sendJson(socket, payload) {
     if (socket.readyState !== WebSocket.OPEN) {
         return;
@@ -29,7 +48,7 @@ function sendJson(socket, payload) {
     socket.send(JSON.stringify(payload))
 
 }
-function broadcast(wss, payload) {
+function broadcastToAll(wss, payload) {
     for (const client of wss.clients) {
         if (client.readyState !== WebSocket.OPEN) {
             continue;
@@ -92,7 +111,7 @@ export function attatchWebSocketServer(server) {
     wss.on('close', () => {clearInterval(interval)})
 
     function broadcastMatchCreated(match) {
-        broadcast(wss, { type: "match_created", data: match })
+        broadcastToAll(wss, { type: "match_created", data: match })
 
     }
     return { broadcastMatchCreated }
