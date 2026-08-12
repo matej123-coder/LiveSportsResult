@@ -15,6 +15,7 @@ app.get('/',(req,res)=>{
 })
 
 app.use(securityMiddleWare());
+
 app.use("/matches",matchRouter)
 
 const {broadcastMatchCreated} = attatchWebSocketServer(server)
