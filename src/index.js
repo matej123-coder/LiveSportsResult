@@ -21,9 +21,9 @@ app.use("/matches",matchRouter)
 
 app.use("/matches/:id/commentary",commentaryRouter)
 
-const {broadcastMatchCreated} = attatchWebSocketServer(server)
+const {broadcastMatchCreated , broadcastCommentary} = attatchWebSocketServer(server)
 app.locals.broadcastMatchCreated = broadcastMatchCreated;
-
+app.locals.broadcastCommentary = broadcastCommentary;
 server.listen(PORT,HOST,()=>{
     const baseUrl = HOST === '0.0.0.0' ? `http://localhost:${PORT}` : `http://${HOST}:${PORT}`
     console.log(`Server is running on ${baseUrl}`)

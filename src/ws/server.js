@@ -56,6 +56,32 @@ function broadcastToAll(wss, payload) {
         client.send(JSON.stringify(payload));
     }
 }
+function handleMessage(socket, data){
+    let message;
+    try{
+        message  = JSON.parse(data.toString());
+    }
+    catch(error){
+        sendJson(socket, {
+            type: "Error",
+             message: "Invalid use"
+        })
+    }
+    if(message?.type === "subscribe" && Number.isInteger(message.matchId)){
+        subscribe(message.matchId, socket)
+        socket.subscriptions.add(message.matchId)
+
+        sendJson(socket,{type: "subscribed", message: message.matchId})
+        return;
+    }
+    if(message?.type === "unsubscribe" && Number.isInteger(message.matchId)){
+        unsubscribe(message.matchId, socket);
+        socket.subscriptions.delete(message.matchId);
+
+        sendJson(socket,{ type: "unsubscribed", message: message.matchId});
+        return;
+    }
+}
 export function attatchWebSocketServer(server) {
     const wss = new WebSocketServer({ noServer: true, path: '/ws', maxPayload: 1024 * 1024 });
      server.on('upgrade', async (req, socket, head) => {
@@ -97,8 +123,17 @@ export function attatchWebSocketServer(server) {
         socket.on('pong', () => {
             socket.isAlive = true;
         })
-
+        socket.subscriptions = new Set();
         sendJson(socket, { type: "welcome" })
+        socket.on('message', (data)=>{
+            handleMessage(socket,data)
+        })
+        socket.on('error', ()=>{
+            socket.terminate();
+        })
+        socket.on("close",()=>{
+            cleanUpSubscriptions(socket)
+        })
         socket.on('error', console.error);
     });
     const interval = setInterval(() => {
@@ -114,5 +149,9 @@ export function attatchWebSocketServer(server) {
         broadcastToAll(wss, { type: "match_created", data: match })
 
     }
-    return { broadcastMatchCreated }
+
+    function broadcastCommentary(matchId, comment){
+        broadcastToMatch(matchId, {type: "commentary", data: comment})
+    }
+    return { broadcastMatchCreated,broadcastCommentary }
 }
