@@ -4,13 +4,22 @@ import  http from "http"
 import { attatchWebSocketServer } from "./ws/server.js";
 import { securityMiddleWare } from "./arcjet.js";
 import { commentaryRouter } from "./routes/commentary.js";
+import cors from "cors"
+
+
+
+const corsOptions = {
+  origin: 'http://localhost:5173', // Allow only this domain
+  credentials: true,             // Allow cookies or authorization headers
+  optionsSuccessStatus: 200
+};
 
 const HOST = process.env.HOST || "0.0.0.0"
 const PORT = Number(process.env.PORT || 8000);
 const app = express();
 const server = http.createServer(app)
 app.use(express.json());
-
+app.use(cors(corsOptions));
 app.get('/',(req,res)=>{
     res.send("Hello from express server");
 })
